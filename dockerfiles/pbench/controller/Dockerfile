@@ -2,6 +2,8 @@
 FROM centos/tools
 MAINTAINER Naga Ravi Chaitanya Elluri <nelluri@redhat.com>
 
+ENV KUBECONFIG /root/.kube/config
+
 # Setup pbench, sshd, pbench-ansible, svt and install dependencies
 RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && \
     curl -s https://copr.fedorainfracloud.org/coprs/ndokos/pbench-interim/repo/epel-7/ndokos-pbench-interim-epel-7.repo > /etc/yum.repos.d/copr-pbench.repo && \
@@ -30,7 +32,9 @@ RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.
 # Expose ports
 EXPOSE 2022 9090
 
-# Run pbench as service
+# Run pbench as a service
 COPY pbench.service /etc/systemd/system/pbench.service
+COPY run.sh /root/run.sh
+COPY extended.test /root/extended.test
 RUN systemctl enable pbench.service
 ENTRYPOINT ["/usr/sbin/init"]

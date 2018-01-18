@@ -4,7 +4,7 @@ After=sshd.service
 
 [Service]
 EnvironmentFile=/root/vars
-ExecStart=/root/script.sh
+ExecStart=/root/run.sh
 StandardOutput=journal+console
 
 [Install]
