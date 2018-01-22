@@ -2,14 +2,17 @@
 FROM centos/tools
 MAINTAINER Naga Ravi Chaitanya Elluri <nelluri@redhat.com>
 
+ENV KUBECONFIG /root/.kube/config
+
 # Setup pbench, sshd, pbench-ansible, svt and install dependencies
 RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && \
     curl -s https://copr.fedorainfracloud.org/coprs/ndokos/pbench-interim/repo/epel-7/ndokos-pbench-interim-epel-7.repo > /etc/yum.repos.d/copr-pbench.repo && \
+    curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | bash && \
     yum --enablerepo=ndokos-pbench-interim install -y configtools openssh-clients pbench-agent \
     iproute sysvinit-tools openssh-server git ansible which  bind-utils blktrace ethtool findutils \
     gnuplot golang httpd-tools hwloc iotop iptables-services kernel ltrace mailx maven netsniff-ng \
     net-tools ntp ntpdate numactl pciutils perf python-docker-py python-flask python-pip python-rbd \
-    python2-boto3 powertop psmisc rpm-build screen sos strace tar tcpdump tmux vim-enhanced xauth wget \
+    python2-boto3 powertop psmisc rpm-build screen sos strace tar tcpdump tmux vim-enhanced xauth wget git-lfs \
     yum-utils rpmdevtools ceph-common glusterfs-fuse iscsi-initiator-utils openssh-server openssh-clients initscripts && \
     yum clean all && \
     source /etc/profile.d/pbench-agent.sh && \
@@ -23,6 +26,9 @@ RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.
     rm -rf openshift-origin-client-tools-* && \
     git clone https://github.com/distributed-system-analysis/pbench.git && \
     git clone https://github.com/openshift/svt.git && \
+    git clone https://github.com/chaitanyaenr/files.git /root/files && \
+    cd /root/files && git-lfs pull && \
+    mv /root/files/extended.test /root/extended.test && \
     mv /opt/pbench-agent/config/pbench-agent.cfg.example /opt/pbench-agent/config/pbench-agent.cfg && \
     sed -i "s/#Port 22/Port 2022/" /etc/ssh/sshd_config && \
     systemctl enable sshd
@@ -30,7 +36,8 @@ RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.
 # Expose ports
 EXPOSE 2022 9090
 
-# Run pbench as service
+# Run pbench as a service
 COPY pbench.service /etc/systemd/system/pbench.service
+COPY run.sh /root/run.sh
 RUN systemctl enable pbench.service
 ENTRYPOINT ["/usr/sbin/init"]
