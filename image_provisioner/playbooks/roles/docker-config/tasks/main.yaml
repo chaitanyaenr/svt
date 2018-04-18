@@ -63,6 +63,13 @@
        path: /etc/fstab
        line: "/dev/mapper/{{ docker_storage_vgname }}-lvol0 {{ docker_storage_mount_path }}                    xfs   defaults        0 0"
        insertafter: EOF
+
+   - name: remove /var/lib/docker/overlay2 from oci-umount.conf
+     lineinfile:
+       path: /etc/oci-umount.conf
+       regexp: '^/var/lib/docker/overlay2'
+       state: absent
+     ignore_errors: true
   when: docker_storage_driver == "overlay2" and not atomic | default(False) | bool
   
 - name: check that docker-storage has been deleted
