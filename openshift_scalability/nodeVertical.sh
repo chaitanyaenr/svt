@@ -1,17 +1,21 @@
 #!/bin/sh
 
-if [ "$#" -ne 2 ]; then
-  echo "syntax: $0 <TESTNAME> <TYPE>"
+if [ "$#" -ne 3 ]; then
+  echo "syntax: $0 <TESTNAME> <TYPE> <ENVIRONMENT>"
   echo "<TYPE> should be either golang or python"
+  echo "<ENVIRONMENT> should be either alderaan or aws"
   exit 1
 fi
 
 TESTNAME=$1
 TYPE=$2
+ENVIRONMENT=$3
 LABEL="node-role.kubernetes.io/compute=true"
 CORE_COMPUTE_LABEL="core_app_node=true"
 TEST_LABEL="nodevertical=true"
-declare -a core_nodes
+declare -a CORE_NODES
+NODE_COUNT=0
+POD_COUNT=0
 
 long_sleep() {
   local sleep_time=180
@@ -37,28 +41,34 @@ python_clusterloader() {
 # sleeping to gather some steady-state metrics, pre-test
 long_sleep
 
-# odes and label the nodes
-for compute in $(oc get nodes -l "$CORE_COMPUTE_LABEL" -o json | jq '.items[].metadata.name'); do
-        compute=$(echo $compute | sed "s/\"//g")
-        core_nodes[${#core_nodes[@]}]=$compute
-        oc label node $compute "$TEST_LABEL"
-done
+# set the number of nodes to label based on environment selected
+if [[ "$ENVIRONMENT" == "alderaan" ]]; then
+	LABEL_COUNT=2
+else
+	LABEL_COUNT=4
+fi
+
+# label the core nodes when using Alderaan env
+if [[ "$ENVIRONMENT" == "alderaan" ]]; then
+	for compute in $(oc get nodes -l "$CORE_COMPUTE_LABEL" -o json | jq '.items[].metadata.name'); do
+        	compute=$(echo $compute | sed "s/\"//g")
+        	CORE_NODES[${#CORE_NODES[@]}]=$compute
+        	oc label node $compute "$TEST_LABEL"
+	done
+fi
 
 # pick two random app nodes and label them
-count=0
 for app_node in $(oc get nodes -l "$LABEL" -o json | jq '.items[].metadata.name'); do
         app_node=$(echo $app_node | sed "s/\"//g")
-        for ((i=0; i<${#core_nodes[*]}; i++));do
-                if [[ $count > 2 ]] || [[ $count == 2 ]]; then
-                        break
-                fi
-        if [[ $app_node != ${core_nodes[i]} ]]; then
-                        count=$count+1
-                        oc label node $app_node $TEST_LABEL
-                fi
-        done
+	if [[ ! $(echo ${CORE_NODES[@]} | grep -q -w $app_node) ]] && [[  $NODE_COUNT -le $LABEL_COUNT ]]; then
+		count=$(( count+1 ))
+		oc label node $app_node "$TEST_LABEL"
+	fi
+	if [[ $NODE_COUNT -ge $LABEL_COUNT  ]]; then
+		break
+	fi
 done
-	
+
 # Run the test
 if [ "$TYPE" == "golang" ]; then
   golang_clusterloader
@@ -72,6 +82,15 @@ else
   echo "$TYPE is not a valid option, available options: golang, python"
   exit 1
 fi
+
+# Get the pod count on the picked nodes
+for node in $(oc get nodes -l="nodevertical=true" | awk 'NR > 1 {print $1}'); do
+        pods_running=$(oc describe node $node | grep -w "Non-terminated \Pods:" | awk  '{print $3}' | sed "s/(//g")
+        POD_COUNT=$(( pod_count+pods_running ))
+done
+
+# Set the pod count in the config
+sed -i "/- num/c \ \ \ \ - num: $POD_COUNT" /root/svt/openshift_scalability/config/golang/pyconfigMasterVertScalePause.yaml
 
 # TODO(himanshu): fix clean function
 #./cluster-loader.py --clean
