@@ -1,11 +1,15 @@
 ---
 - block:
+  - name: Walid added this to remove the rh-amazon-rhui-client pkg
+    yum:
+      name: rh-amazon-rhui-client
+      state: absent
 
   - name: yum update
     yum: 
       name: '*' 
       state: latest
-      exclude: redhat-release*,initscripts*,microcode_ctl
+      exclude: redhat-release*,initscripts*,microcode_ctl, kernel*, selinux-policy*, microcode_ctl
  
   - name: yum update redhat-release-server
     yum:
@@ -33,7 +37,7 @@
       - hwloc
       - iotop
       - iptables-services
-      - kernel
+        #      - kernel
       - kernel-devel
       - ltrace
       - mailx
@@ -91,17 +95,23 @@
       - pbscraper
       - pbcompare
 
+  - name: clean all
+    shell: yum clean all
+
   - name: install pbench internal
     yum: 
       name: pbench-agent-internal 
       state: latest
-    when: internal_image | bool
+
+  - name: reinstall
+    shell: yum reinstall pbench-agent-internal -y
+    ignore_errors: yes
 
   # yum module doesn't support clean
   - name: clean yum cache
     command: yum --enablerepo=ndokos-pbench-interim clean all 
 
-  - name: update pbench-agent to get the latest changes
+  - name: Install pbench-agent to get the latest changes
     yum: 
       name: pbench-agent 
       enablerepo: ndokos-pbench-interim
@@ -149,3 +159,6 @@
 
 - name: install pytimeparse module
   command: pip install pytimeparse
+
+  #- name: fix selinux issue
+  #shell: ausearch -c 'haproxy' --raw | audit2allow -M local && semodule -i local.pp

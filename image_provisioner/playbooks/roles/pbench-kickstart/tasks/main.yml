@@ -26,9 +26,16 @@
 
 - name: pull pbench-controller image from dockerhub
   command: docker pull ravielluri/image:controller
+  ignore_errors: yes
 
 - name: tag pbench-controller image
   command: docker tag ravielluri/image:controller pbench-controller:latest
+  ignore_errors: yes
+
+- name: pull ycsb image from docker.io
+  docker_image:
+    name: docker.io/hongkailiu/ycsb
+    tag: 0.15.0
 
 - name: add token needed for uploading r2r results
   lineinfile:

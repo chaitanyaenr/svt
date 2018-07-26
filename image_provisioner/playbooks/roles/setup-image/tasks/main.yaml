@@ -51,13 +51,13 @@
 
 - block:
   - name: create tmp disk for first resize pass
-    command: qemu-img create -f {{ qemu_img_format }} -o preallocation=full {{ tmp_img_location }} {{ (extend_disk_gb+10)|int|abs }}G
+    command: qemu-img create -f {{ qemu_img_format }} -o preallocation=full {{ tmp_img_location }} {{ (extend_disk_gb+25)|int|abs }}G
 
   - name: resize root partition from 6G to 10G
-    command: virt-resize --quiet --resize {{ root_partition }}=+4G {{ base_image_location }} {{ tmp_img_location }}
+    command: virt-resize --quiet --resize {{ root_partition }}=+19G {{ base_image_location }} {{ tmp_img_location }}
   
   - name: create tmp disk for adding second partition for docker thinpool
-    command: qemu-img create -f {{ qemu_img_format }} -o preallocation=full {{ qemu_img_location }} {{ (extend_disk_gb+10+1)|int|abs }}G
+    command: qemu-img create -f {{ qemu_img_format }} -o preallocation=full {{ qemu_img_location }} {{ (extend_disk_gb+25+1)|int|abs }}G
 
   - name: resize second partition to use all free space
     command: virt-resize --quiet --expand {{ docker_storage_device }} {{ tmp_img_location }} {{ qemu_img_location }}
