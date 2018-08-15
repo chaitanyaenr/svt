@@ -106,6 +106,12 @@
       name: pbench-agent 
       enablerepo: ndokos-pbench-interim
       state: latest
+  
+  - name: install pbench-agent-internal
+    yum:
+      name: pbench-agent-internal
+      enablerepo: pbench-internal
+      state: latest
 
   - name: never expire yum metadata
     lineinfile: 
