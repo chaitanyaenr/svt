@@ -1,11 +1,16 @@
 ---
 - block:
 
+  - name: Walid added this to remove the rh-amazon-rhui-client pkg
+    yum:
+      name: rh-amazon-rhui-client
+      state: absent
+
   - name: yum update
     yum: 
       name: '*' 
       state: latest
-      exclude: redhat-release*,initscripts*,microcode_ctl
+      exclude: redhat-release*,initscripts*,microcode_ctl,kernel*, selinux-policy*
  
   - name: yum update redhat-release-server
     yum:
