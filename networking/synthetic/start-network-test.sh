@@ -57,7 +57,7 @@ cp /root/svt-private/image_provisioner/id_rsa_perf.pub id_rsa.pub
 #master=`cat config.yaml |egrep 'master:' | awk -F: '{print $2}'`
 #nodes=`cat config.yaml |egrep 'nodes:' | awk -F: '{print $2}'`
 masters=`oc get nodes | grep master | awk '{print $1}'`
-nodes=`oc get nodes | grep ' compute' | awk '{print $1}'`
+nodes=`oc get nodes | grep 'worker' | awk '{print $1}'`
 
 # make the master schedulable --no longer needed-- 
 #oc adm manage-node --schedulable=true ${master}
