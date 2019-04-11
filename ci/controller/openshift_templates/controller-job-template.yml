@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: controller
+  annotations:
+  labels:
+    name: controller
+objects:
+ - apiVersion: batch/v1
+   kind: Job
+   metadata:
+     name: controller
+     annotations:
+     labels:
+       name: controller
+   spec:
+     parallelism: 1
+     completions: 1
+     backoffLimit: 0
+     template:
+       metadata:
+         name: controller
+       spec:
+         containers:
+         - name: controller
+           image: "${SCALE_TEST_IMAGE}"
+           imagePullPolicy: Always
+           envFrom:
+           - configMapRef:
+               name: scale-config
+         restartPolicy: Never 
+parameters:
+- description: image used to run the scale test
+  name: SCALE_TEST_IMAGE
+  required: true
+labels:
+  name: controller

@@ -25,9 +25,12 @@ else
 	echo "$MODE is not a valid option, please check"
 fi
 
+# Export kube config
+export KUBECONFIG=${KUBECONFIG-$HOME/.kube/config}
+
 golang_clusterloader() {
   # Export kube config
-  export KUBECONFIG=${KUBECONFIG-$HOME/.kube/config}
+#  export KUBECONFIG=${KUBECONFIG-$HOME/.kube/config}
   MY_CONFIG=config/golang/pyconfigMasterVertScalePause
   # loading cluster based on yaml config file
   VIPERCONFIG=$MY_CONFIG openshift-tests run-test "[Feature:Performance][Serial][Slow] Load cluster should load the cluster [Suite:openshift]"

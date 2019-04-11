@@ -1,23 +1,29 @@
 #!/bin/bash
 
-svt_repo_location=/root
+svt_repo_location=$PWD
 controller_namespace=controller
 properties_path=/root/properties
 counter_time=5
 wait_time=25
+kubeconfig_path=$1
+scale_test_image=$2
+properties_file_path=$3
+
+export KUBECONFIG=$kubeconfig_path
+
+if [[ $# -ne 3 ]]; then
+	echo "syntax: $0 <path-to-kubeconfig> <scale-test-image> <properties_file_path>"
+	echo "<scale-test-image> can be ravielluri/image:nodevertical or ravielluri/image:mastervertical"
+	exit 1
+fi
 
 # Cleanup
 function cleanup() {
-	oc delete -f $svt_repo_location/svt/openshift_templates/performance_monitoring/scale-ci-controller/controller-job.yml -n $controller_namespace
-	oc delete cm tooling-config -n $controller_namespace
+	oc process -p SCALE_TEST_IMAGE=$scale_test_image -f $svt_repo_location/svt/ci/controller/openshift_templates/controller-job-template.yml | oc delete -n $controller_namespace -f -
+	oc delete cm scale-config -n $controller_namespace
 	sleep $wait_time
-	oc delete project --wait=true $controller_namespace
-}
-
-# Create a service account and add it to the privileged scc
-function create_service_account() {
-        oc create serviceaccount useroot -n $controller_namespace
-        oc adm policy add-scc-to-user privileged -z useroot -n $controller_namespace
+	oc delete project $controller_namespace
+	sleep $wait_time
 }
 
 # Ensure that the host has svt repo cloned
@@ -38,14 +44,13 @@ fi
 oc project $controller_namespace &>/dev/null
 if [[ $? == 0 ]]; then
         echo "Looks like the $controller_namespace already exists, deleting it"
-	cleanup	
+	cleanup
 fi
 
-# Create controller ns, configmap and run the job
-oc create -f $svt_repo_location/svt/openshift_templates/performance_monitoring/scale-ci-controller/controller-ns.yml
-create_service_account
-oc create configmap tooling-config --from-env-file=$properties_path -n $controller_namespace
-oc create -f $svt_repo_location/svt/openshift_templates/performance_monitoring/scale-ci-controller/controller-job.yml -n $controller_namespace
+# create controller ns, configmap, job to run the scale test
+oc create -f $svt_repo_location/svt/ci/controller/openshift_templates/controller-ns.yml
+oc create configmap scale-config --from-file=$properties_file_path --from-literal=kubeconfig="$(cat $kubeconfig_path)" -n $controller_namespace
+oc process -p SCALE_TEST_IMAGE=$scale_test_image -f $svt_repo_location/svt/ci/controller/openshift_templates/controller-job-template.yml | oc create -n $controller_namespace -f -
 sleep $wait_time
 controller_pod=$(oc get pods -n $controller_namespace | grep "controller" | awk '{print $1}')
 counter=0
