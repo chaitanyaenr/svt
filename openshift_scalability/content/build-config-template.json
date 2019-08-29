@@ -31,9 +31,9 @@
         "source": {
           "type": "Git",
           "git": {
-            "uri": "git://github.com/tiwillia/hello-openshift-example.git"
+            "uri": "https://github.com/openshift-scale/hello-openshift.git"
           },
-          "dockerfile": "FROM openshift/hello-openshift\nUSER example"
+          "dockerfile": "FROM quay.io/openshift-scale/mastervertical-build\nUSER 1001"
         },
         "strategy": {
           "type": "Source",

@@ -31,7 +31,7 @@
     {
       "name": "IMAGE",
       "description": "Image to use for this image stream",
-      "value": "openshift/hello-openshift",
+      "value": "quay.io/openshift-scale/mastervertical-build",
       "required": false
     }
   ],

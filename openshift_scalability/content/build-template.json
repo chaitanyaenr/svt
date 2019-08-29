@@ -35,9 +35,9 @@
         "resources": {},
         "serviceAccount": "builder",
         "source": {
-          "dockerfile": "FROM openshift/hello-openshift\nUSER example",
+          "dockerfile": "FROM quay.io/openshift-scale/mastervertical-build\nUSER 1001",
           "git": {
-            "uri": "git://github.com/tiwillia/hello-openshift-example.git"
+            "uri": "https://github.com/openshift-scale/hello-openshift.git"
           },
           "secrets": null,
           "type": "Git"
@@ -46,7 +46,7 @@
           "sourceStrategy": {
             "from": {
               "kind": "DockerImage",
-              "name": "openshift/hello-openshift@sha256:b4385c1776fec7175b35cf5e55b21902e5ba27d8d4d4b71bfb2f7cf9d0eb7a14"
+              "name": "quay.io/openshift-scale/mastervertical-build:latest"
             }
           },
           "type": "Source"
@@ -56,9 +56,7 @@
         "config": {
           "kind": "BuildConfig",
           "name": "buildconfig${IDENTIFIER}"
-        },
-        "outputDockerImageReference": "openshift/hello-openshift:latest",
-        "phase": "Failed"
+        }
       }
     }
   ],
